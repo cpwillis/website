@@ -1,10 +1,18 @@
 {
   "name": "website",
-  "compatibility_date": "2025-09-27",
+  "main": "src/index.js",
+  "compatibility_date": "2026-03-24",
   "observability": {
     "enabled": true
   },
+  "vars": {
+    "GITFOLIO_ORIGIN": "https://gitfolio.cpwillis.dev",
+    "GITFOLIO_USER": "cpwillis"
+  },
   "assets": {
-    "directory": "./public"
+    "directory": "./public",
+    "binding": "ASSETS",
+    // /terms, /privacy and the icons come straight off the asset router
+    "run_worker_first": ["/", "/api/*", "/shot/*", "/favicon.svg"]
   }
 }

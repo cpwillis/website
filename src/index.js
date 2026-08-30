@@ -30,7 +30,12 @@ export default {
     try {
       const res = await fetch(upstream, {
         method: req.method,
-        headers: { accept: req.headers.get('accept') || '*/*', 'user-agent': req.headers.get('user-agent') || '' },
+        headers: {
+          accept: req.headers.get('accept') || '*/*',
+          'user-agent': req.headers.get('user-agent') || '',
+          // so gitfolio recognises a repo pointing back at this site and does not show it
+          'x-forwarded-host': url.hostname,
+        },
         redirect: 'manual',
         signal: AbortSignal.timeout(TIMEOUT_MS),
       })

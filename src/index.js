@@ -59,24 +59,28 @@ export default {
     if (path !== '/') upstream.searchParams.set('user', user)
 
     try {
+      // Run the probe alongside the fetch. It is normally a cache hit, but when it is not, asking
+      // first and fetching second doubles the worst-case wait for no extra information.
       // For the page itself, a broken feed means the static page is the better answer.
-      if (path === '/' && !(await feedHealthy(origin, user))) return fallback(req, env, path)
-      const res = await fetch(upstream, {
-        method: req.method,
-        headers: {
-          accept: req.headers.get('accept') || '*/*',
-          'user-agent': req.headers.get('user-agent') || '',
-          // so gitfolio recognises a repo pointing back at this site and does not show it
-          'x-forwarded-host': url.hostname,
-        },
-        redirect: 'manual',
-        signal: AbortSignal.timeout(TIMEOUT_MS),
-      })
+      const [res, healthy] = await Promise.all([
+        fetch(upstream, {
+          method: req.method,
+          headers: {
+            accept: req.headers.get('accept') || '*/*',
+            'user-agent': req.headers.get('user-agent') || '',
+            // so gitfolio recognises a repo pointing back at this site and does not show it
+            'x-forwarded-host': url.hostname,
+          },
+          redirect: 'manual',
+          signal: AbortSignal.timeout(TIMEOUT_MS),
+        }),
+        path === '/' ? feedHealthy(origin, user) : true,
+      ])
+      if (!healthy) return fallback(req, env, path)
       // Any failure upstream, including GitHub rate limiting surfacing as 429/503, means the
-      // mirrored profile is not usable. Fall back rather than pass the error on.
-      if (!res.ok && res.status !== 304 && (res.status < 300 || res.status >= 400)) {
-        throw new Error(res.status)
-      }
+      // mirrored profile is not usable. Fall back rather than pass the error on. Redirects and 304
+      // are passed through: redirect:'manual' hands them back for the browser to act on.
+      if (res.status >= 400) throw new Error(res.status)
       return new Response(res.body, { status: res.status, headers: res.headers })
     } catch {
       return fallback(req, env, path)

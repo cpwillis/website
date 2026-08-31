@@ -3,9 +3,34 @@
 // by other projects and must not depend on gitfolio being up.
 
 const TIMEOUT_MS = 3000
+const HEALTH_OK_TTL = 60    // how long a healthy verdict is trusted
+const HEALTH_BAD_TTL = 30   // shorter when degraded, so recovery shows up quickly
 
 // Paths gitfolio owns. Everything else is served from public/.
 const PROXIED = p => p === '/' || p.startsWith('/api/') || p.startsWith('/shot/') || p === '/favicon.svg'
+
+// The page shell answers 200 even when the feed behind it is broken, so proxying the shell alone
+// would serve a portfolio with an error message where the projects should be. Ask the feed directly,
+// and cache the verdict so this costs one upstream call a minute rather than one per visitor.
+async function feedHealthy(origin, user) {
+  const k = new Request(`https://health/${user}`)
+  const cache = caches.default
+  const hit = await cache.match(k)
+  if (hit) return (await hit.text()) === '1'
+  let ok = false
+  try {
+    const r = await fetch(new URL(`/api/repos?user=${encodeURIComponent(user)}`, origin), {
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    })
+    ok = r.ok
+  } catch {
+    ok = false
+  }
+  await cache.put(k, new Response(ok ? '1' : '', {
+    headers: { 'cache-control': `max-age=${ok ? HEALTH_OK_TTL : HEALTH_BAD_TTL}` },
+  }))
+  return ok
+}
 
 export default {
   async fetch(req, env, ctx) {
@@ -28,6 +53,8 @@ export default {
     if (path !== '/') upstream.searchParams.set('user', user)
 
     try {
+      // For the page itself, a broken feed means the static page is the better answer.
+      if (path === '/' && !(await feedHealthy(origin, user))) return fallback(req, env, path)
       const res = await fetch(upstream, {
         method: req.method,
         headers: {
@@ -39,7 +66,11 @@ export default {
         redirect: 'manual',
         signal: AbortSignal.timeout(TIMEOUT_MS),
       })
-      if (res.status >= 500 || res.status === 0) throw new Error(res.status)
+      // Any failure upstream, including GitHub rate limiting surfacing as 429/503, means the
+      // mirrored profile is not usable. Fall back rather than pass the error on.
+      if (!res.ok && res.status !== 304 && (res.status < 300 || res.status >= 400)) {
+        throw new Error(res.status)
+      }
       return new Response(res.body, { status: res.status, headers: res.headers })
     } catch {
       return fallback(req, env, path)

@@ -19,6 +19,8 @@
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
+    // a mistyped url was a zero-byte body with no content-type
+    "not_found_handling": "404-page",
     // /terms and /privacy come straight off the asset router, so they survive a gitfolio outage
     "run_worker_first": ["/", "/api/*", "/shot/*", "/favicon.svg", "/favicon.ico", "/apple-touch-icon.png"]
   }

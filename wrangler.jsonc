@@ -12,7 +12,7 @@
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
-    // /terms, /privacy and the icons come straight off the asset router
-    "run_worker_first": ["/", "/api/*", "/shot/*", "/favicon.svg"]
+    // /terms and /privacy come straight off the asset router, so they survive a gitfolio outage
+    "run_worker_first": ["/", "/api/*", "/shot/*", "/favicon.svg", "/favicon.ico", "/apple-touch-icon.png"]
   }
 }

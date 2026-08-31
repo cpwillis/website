@@ -9,8 +9,11 @@ const HEALTH_BAD_TTL = 30   // shorter when degraded, so recovery shows up quick
 // Exactly the paths gitfolio owns. A prefix match would forward /api/anything upstream, where the
 // single-page-application fallback answers 200 with the profile page, so a URL that does not exist
 // would look like it does. Everything else is served from public/, which 404s properly.
+// The icons are gitfolio's too: it redirects the two legacy paths to the sized GitHub avatar, so
+// they follow the profile picture instead of going stale as a committed copy would.
+const ICONS = new Set(['/favicon.svg', '/favicon.ico', '/apple-touch-icon.png'])
 const PROXIED = p =>
-  p === '/' || p === '/api/repos' || p === '/favicon.svg' || /^\/shot\/[^/]+\.png$/.test(p)
+  p === '/' || p === '/api/repos' || ICONS.has(p) || /^\/shot\/[^/]+\.png$/.test(p)
 
 // The page shell answers 200 even when the feed behind it is broken, so proxying the shell alone
 // would serve a portfolio with an error message where the projects should be. Ask the feed directly,

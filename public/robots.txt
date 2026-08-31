@@ -1,0 +1,6 @@
+# The dynamic routes exist for this site's own pages, not for crawling.
+User-agent: *
+Disallow: /api/
+Disallow: /shot/
+
+Sitemap: https://cpwillis.dev/sitemap.xml

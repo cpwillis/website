@@ -2,6 +2,13 @@
   "name": "website",
   "main": "src/index.js",
   "compatibility_date": "2026-03-24",
+  // declared here rather than only in the dashboard, so a redeploy from a clean checkout keeps the domain
+  "routes": [
+    {
+      "pattern": "cpwillis.dev",
+      "custom_domain": true
+    }
+  ],
   "observability": {
     "enabled": true
   },

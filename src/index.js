@@ -81,7 +81,18 @@ export default {
       // mirrored profile is not usable. Fall back rather than pass the error on. Redirects and 304
       // are passed through: redirect:'manual' hands them back for the browser to act on.
       if (res.status >= 400) throw new Error(res.status)
-      return new Response(res.body, { status: res.status, headers: res.headers })
+      const out = new Response(res.body, { status: res.status, headers: res.headers })
+      if (path !== '/') return out
+      // gitfolio writes its own host into the title, canonical and og tags, which on this domain
+      // would hand the ranking to the generator's demo. This is the personal site, so it says so.
+      const home = `https://${url.hostname}/`
+      return new HTMLRewriter()
+        .on('title', { element: e => e.setInnerContent(user) })
+        .on('meta[name="description"]', { element: e => e.setAttribute('content', `Projects and open-source work by ${user}.`) })
+        .on('link[rel="canonical"]', { element: e => e.setAttribute('href', home) })
+        .on('meta[property="og:title"]', { element: e => e.setAttribute('content', user) })
+        .on('meta[property="og:url"]', { element: e => e.setAttribute('content', home) })
+        .transform(out)
     } catch {
       return fallback(req, env, path)
     }

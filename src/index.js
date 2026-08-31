@@ -6,8 +6,11 @@ const TIMEOUT_MS = 3000
 const HEALTH_OK_TTL = 60    // how long a healthy verdict is trusted
 const HEALTH_BAD_TTL = 30   // shorter when degraded, so recovery shows up quickly
 
-// Paths gitfolio owns. Everything else is served from public/.
-const PROXIED = p => p === '/' || p.startsWith('/api/') || p.startsWith('/shot/') || p === '/favicon.svg'
+// Exactly the paths gitfolio owns. A prefix match would forward /api/anything upstream, where the
+// single-page-application fallback answers 200 with the profile page, so a URL that does not exist
+// would look like it does. Everything else is served from public/, which 404s properly.
+const PROXIED = p =>
+  p === '/' || p === '/api/repos' || p === '/favicon.svg' || /^\/shot\/[^/]+\.png$/.test(p)
 
 // The page shell answers 200 even when the feed behind it is broken, so proxying the shell alone
 // would serve a portfolio with an error message where the projects should be. Ask the feed directly,

@@ -92,6 +92,8 @@ export default {
         .on('link[rel="canonical"]', { element: e => e.setAttribute('href', home) })
         .on('meta[property="og:title"]', { element: e => e.setAttribute('content', user) })
         .on('meta[property="og:url"]', { element: e => e.setAttribute('content', home) })
+        // gitfolio's footer credits itself at "/", which on this domain is this very page
+        .on('#gen', { element: e => e.setAttribute('href', origin) })
         .transform(out)
     } catch {
       return fallback(req, env, path)

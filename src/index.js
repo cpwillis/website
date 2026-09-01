@@ -71,9 +71,12 @@ export default {
         path === '/' ? feedHealthy(origin, user) : true,
       ])
       if (!healthy) return fallback(req, env, path)
-      // Any 4xx/5xx upstream (GitHub throttling included) means the mirror is unusable, so fall back
-      // rather than pass it on. 3xx and 304 pass through for the browser, via redirect:'manual'.
-      if (res.status >= 400) throw new Error(res.status)
+      // A 404 from gitfolio answers one resource, it does not mean the mirror is unusable, so pass
+      // it through with its own body rather than replacing it with a blank one. Only a server error
+      // is an outage. "/" is the exception: a profile page that will not render should become the
+      // static page whatever the status, including GitHub throttling surfacing as 429.
+      // 3xx and 304 pass through for the browser, via redirect:'manual'.
+      if (res.status >= 500 || (path === '/' && res.status >= 400)) throw new Error(res.status)
       const out = new Response(res.body, { status: res.status, headers: res.headers })
       if (path !== '/') return out
       // gitfolio stamps its own host into the title, canonical and og tags, which would hand this

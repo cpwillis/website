@@ -13,7 +13,7 @@ so link to those URLs from other repos rather than copying the pages.
 
 ## Routing
 
-`src/index.js` proxies exactly the paths gitfolio owns: `/`, `/api/repos`, `/shot/<name>.png`, and the three icon paths.
+`src/index.js` proxies exactly the paths gitfolio owns: `/`, `/api/repos`, `/sc/<user>/<repo>`, and the three icon paths.
 Everything else is served from `public/` and 404s properly. The list is duplicated in `assets.run_worker_first` in
 `wrangler.jsonc`; keep the two in step. A prefix match is deliberately avoided: gitfolio's SPA fallback answers 200 for
 any unknown `/api/*`, so a nonexistent URL would look like it exists.

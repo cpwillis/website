@@ -10,7 +10,7 @@ const HEALTH_BAD_TTL = 30   // shorter when degraded, so recovery shows quickly
 // Icons are gitfolio's too: it redirects the legacy paths to the sized avatar, so they never stale.
 const ICONS = new Set(['/favicon.svg', '/favicon.ico', '/apple-touch-icon.png'])
 const PROXIED = p =>
-  p === '/' || p === '/api/repos' || ICONS.has(p) || /^\/shot\/[^/]+\.png$/.test(p)
+  p === '/' || p === '/api/repos' || ICONS.has(p) || /^\/sc\/[^/]+\/[^/]+$/.test(p)
 
 // The shell 200s even with a broken feed behind it, so ask the feed itself. Cached, so it costs
 // one upstream call a minute rather than one per visitor.

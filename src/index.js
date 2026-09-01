@@ -1,23 +1,19 @@
-// cpwillis.dev mirrors this profile from gitfolio, and falls back to the static page in public/
-// if gitfolio is slow or down. /terms and /privacy are always served locally: they are referenced
-// by other projects and must not depend on gitfolio being up.
+// Mirrors gitfolio at cpwillis.dev, falling back to public/ when gitfolio is slow or down.
+// /terms and /privacy stay local: other projects link them, so they must not depend on gitfolio.
 
 const TIMEOUT_MS = 3000
 const HEALTH_OK_TTL = 60    // how long a healthy verdict is trusted
-const HEALTH_BAD_TTL = 30   // shorter when degraded, so recovery shows up quickly
+const HEALTH_BAD_TTL = 30   // shorter when degraded, so recovery shows quickly
 
-// Exactly the paths gitfolio owns. A prefix match would forward /api/anything upstream, where the
-// single-page-application fallback answers 200 with the profile page, so a URL that does not exist
-// would look like it does. Everything else is served from public/, which 404s properly.
-// The icons are gitfolio's too: it redirects the two legacy paths to the sized GitHub avatar, so
-// they follow the profile picture instead of going stale as a committed copy would.
+// Exact paths only. A prefix match sends /api/anything upstream, where gitfolio's SPA fallback
+// answers 200, so a dead URL would look alive. Everything else comes from public/ and 404s.
+// Icons are gitfolio's too: it redirects the legacy paths to the sized avatar, so they never stale.
 const ICONS = new Set(['/favicon.svg', '/favicon.ico', '/apple-touch-icon.png'])
 const PROXIED = p =>
   p === '/' || p === '/api/repos' || ICONS.has(p) || /^\/shot\/[^/]+\.png$/.test(p)
 
-// The page shell answers 200 even when the feed behind it is broken, so proxying the shell alone
-// would serve a portfolio with an error message where the projects should be. Ask the feed directly,
-// and cache the verdict so this costs one upstream call a minute rather than one per visitor.
+// The shell 200s even with a broken feed behind it, so ask the feed itself. Cached, so it costs
+// one upstream call a minute rather than one per visitor.
 async function feedHealthy(origin, user) {
   const k = new Request(`https://health/${user}`)
   const cache = caches.default
@@ -52,23 +48,21 @@ export default {
     const user = env.GITFOLIO_USER
     if (!origin || !user) return fallback(req, env, path)
 
-    // '/' maps to that user's portfolio; the dynamic routes carry the user explicitly so this
-    // never depends on whatever gitfolio's own default account happens to be.
+    // '/' is that user's portfolio; the dynamic routes name the user, so gitfolio's default never applies.
     const upstream = new URL(path === '/' ? `/${user}` : path, origin)
     for (const [k, v] of url.searchParams) upstream.searchParams.set(k, v)
     if (path !== '/') upstream.searchParams.set('user', user)
 
     try {
-      // Run the probe alongside the fetch. It is normally a cache hit, but when it is not, asking
-      // first and fetching second doubles the worst-case wait for no extra information.
-      // For the page itself, a broken feed means the static page is the better answer.
+      // Probe alongside the fetch: serialising them doubles the worst case for no extra information.
+      // A broken feed means the static page is the better answer for '/'.
       const [res, healthy] = await Promise.all([
         fetch(upstream, {
           method: req.method,
           headers: {
             accept: req.headers.get('accept') || '*/*',
             'user-agent': req.headers.get('user-agent') || '',
-            // so gitfolio recognises a repo pointing back at this site and does not show it
+            // lets gitfolio spot a repo pointing back here and hide it
             'x-forwarded-host': url.hostname,
           },
           redirect: 'manual',
@@ -77,14 +71,13 @@ export default {
         path === '/' ? feedHealthy(origin, user) : true,
       ])
       if (!healthy) return fallback(req, env, path)
-      // Any failure upstream, including GitHub rate limiting surfacing as 429/503, means the
-      // mirrored profile is not usable. Fall back rather than pass the error on. Redirects and 304
-      // are passed through: redirect:'manual' hands them back for the browser to act on.
+      // Any 4xx/5xx upstream (GitHub throttling included) means the mirror is unusable, so fall back
+      // rather than pass it on. 3xx and 304 pass through for the browser, via redirect:'manual'.
       if (res.status >= 400) throw new Error(res.status)
       const out = new Response(res.body, { status: res.status, headers: res.headers })
       if (path !== '/') return out
-      // gitfolio writes its own host into the title, canonical and og tags, which on this domain
-      // would hand the ranking to the generator's demo. This is the personal site, so it says so.
+      // gitfolio stamps its own host into the title, canonical and og tags, which would hand this
+      // domain's ranking to the generator's demo. Claim them for the personal site instead.
       const home = `https://${url.hostname}/`
       return new HTMLRewriter()
         .on('title', { element: e => e.setInnerContent(user) })
@@ -92,7 +85,7 @@ export default {
         .on('link[rel="canonical"]', { element: e => e.setAttribute('href', home) })
         .on('meta[property="og:title"]', { element: e => e.setAttribute('content', user) })
         .on('meta[property="og:url"]', { element: e => e.setAttribute('content', home) })
-        // gitfolio's footer credits itself at "/", which on this domain is this very page
+        // gitfolio's footer credits itself at "/", which here is this page
         .on('#gen', { element: e => e.setAttribute('href', origin) })
         .transform(out)
     } catch {
@@ -101,8 +94,7 @@ export default {
   },
 }
 
-// Only the page itself has something to fall back to; the dynamic routes just stop existing,
-// which is exactly what the static page expects since it never calls them.
+// Only '/' has a fallback. The dynamic routes just stop existing, which the static page expects.
 function fallback(req, env, path) {
   if (path !== '/') return new Response(null, { status: 404 })
   return env.ASSETS.fetch(new Request(new URL('/', req.url), req))

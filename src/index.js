@@ -96,6 +96,8 @@ export default {
 
 // Only '/' has a fallback. The dynamic routes just stop existing, which the static page expects.
 function fallback(req, env, path) {
-  if (path !== '/') return new Response(null, { status: 404 })
+  // no-store: a proxied 404 is usually a screenshot that has not been captured yet, and a browser
+  // that caches it stops asking, leaving an empty preview long after the image exists.
+  if (path !== '/') return new Response(null, { status: 404, headers: { 'cache-control': 'no-store' } })
   return env.ASSETS.fetch(new Request(new URL('/', req.url), req))
 }

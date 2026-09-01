@@ -2,8 +2,8 @@
 
 Cloudflare Worker behind `cpwillis.dev`. It does three things:
 
-- Mirrors one gitfolio profile page at `/`, rewriting title, description, canonical and og tags so the ranking
-  belongs to this domain rather than the generator's.
+- Mirrors one [gitfolio](https://github.com/cpwillis/gitfolio) profile page at `/`, rewriting title, description,
+  canonical and og tags so the ranking belongs to this domain rather than the generator's.
 - Serves `/terms` and `/privacy`, the shared policies the owner's other personal projects link to.
 - Falls back to the static page in `public/` when gitfolio's feed is unhealthy.
 

@@ -11,8 +11,10 @@ h1{font-size:clamp(1.75rem,5vw,2.5rem);line-height:1.1;letter-spacing:-.03em;mar
 h2{font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);
   font-weight:600;margin:2.5rem 0 .5rem}
 p,li{color:#c9c9d0}
-ul{padding-left:1.1rem}
-li{margin:.3rem 0}
+ol{list-style:none;padding:0;margin:.5rem 0}
+ol ol{margin:.3rem 0 0}
+li{position:relative;padding-left:2.25em;margin:.45rem 0}
+.n{position:absolute;left:0}
 strong{color:var(--fg);font-weight:600}
 a{color:var(--fg);text-decoration:none;border-bottom:1px solid #33333a}
 a:hover{color:var(--accent);border-bottom-color:var(--accent)}

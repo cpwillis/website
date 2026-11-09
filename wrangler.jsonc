@@ -1,6 +1,5 @@
 {
   "name": "website",
-  "main": "src/index.js",
   "compatibility_date": "2026-03-24",
   // declared here rather than only in the dashboard, so a redeploy from a clean checkout keeps the domain
   "routes": [
@@ -12,16 +11,10 @@
   "observability": {
     "enabled": true
   },
-  "vars": {
-    "GITFOLIO_ORIGIN": "https://gitfolio.cpwillis.dev",
-    "GITFOLIO_USER": "cpwillis"
-  },
+  // assets only, no worker code: home and icons redirect via public/_redirects
   "assets": {
     "directory": "./public",
-    "binding": "ASSETS",
     // a mistyped url was a zero-byte body with no content-type
-    "not_found_handling": "404-page",
-    // /terms and /privacy come straight off the asset router, so they survive a gitfolio outage
-    "run_worker_first": ["/", "/api/*", "/sc/*", "/favicon.svg", "/favicon.ico", "/apple-touch-icon.png"]
+    "not_found_handling": "404-page"
   }
 }

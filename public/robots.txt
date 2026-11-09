@@ -1,6 +1,5 @@
-# The dynamic routes exist for this site's own pages, not for crawling.
+# Crawl the policies; home redirects off-site.
 User-agent: *
-Disallow: /api/
-Disallow: /shot/
+Disallow:
 
 Sitemap: https://cpwillis.dev/sitemap.xml

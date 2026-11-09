@@ -11,8 +11,8 @@ The policies live here, not in each project, so one edit covers all of them. The
 ## Routing
 
 `public/_redirects` sends `/` to the GitHub profile (302, so home can point elsewhere later without stale browser
-caches) and `/favicon.ico` and `/apple-touch-icon.png` to the GitHub avatar. `public/favicon.svg` is a local copy of the
-avatar. Everything else is served from `public/` and 404s properly.
+caches) and `/favicon.ico` and `/apple-touch-icon.png` to the GitHub avatar, so the icon always matches it.
+Everything else is served from `public/` and 404s properly.
 
 ## Local
 
